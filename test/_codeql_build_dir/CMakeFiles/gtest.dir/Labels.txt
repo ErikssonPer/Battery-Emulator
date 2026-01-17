@@ -1,0 +1,13 @@
+# Target labels
+ gtest
+# Source files and their labels
+/home/runner/work/Battery-Emulator/Battery-Emulator/test/_codeql_build_dir/CMakeFiles/gtest
+/home/runner/work/Battery-Emulator/Battery-Emulator/test/_codeql_build_dir/CMakeFiles/gtest.rule
+/home/runner/work/Battery-Emulator/Battery-Emulator/test/_codeql_build_dir/CMakeFiles/gtest-complete.rule
+/home/runner/work/Battery-Emulator/Battery-Emulator/test/_codeql_build_dir/gtest/src/gtest-stamp/gtest-build.rule
+/home/runner/work/Battery-Emulator/Battery-Emulator/test/_codeql_build_dir/gtest/src/gtest-stamp/gtest-configure.rule
+/home/runner/work/Battery-Emulator/Battery-Emulator/test/_codeql_build_dir/gtest/src/gtest-stamp/gtest-download.rule
+/home/runner/work/Battery-Emulator/Battery-Emulator/test/_codeql_build_dir/gtest/src/gtest-stamp/gtest-install.rule
+/home/runner/work/Battery-Emulator/Battery-Emulator/test/_codeql_build_dir/gtest/src/gtest-stamp/gtest-mkdir.rule
+/home/runner/work/Battery-Emulator/Battery-Emulator/test/_codeql_build_dir/gtest/src/gtest-stamp/gtest-patch.rule
+/home/runner/work/Battery-Emulator/Battery-Emulator/test/_codeql_build_dir/gtest/src/gtest-stamp/gtest-update.rule
