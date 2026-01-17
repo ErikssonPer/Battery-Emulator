@@ -21,11 +21,38 @@ void EmusBms::update_values() {
   datalayer_battery->status.remaining_capacity_Wh = static_cast<uint32_t>(
       (static_cast<double>(datalayer_battery->status.real_soc) / 10000) * datalayer_battery->info.total_capacity_Wh);
 
-  datalayer_battery->status.cell_max_voltage_mV = cellvoltage_max_mV;
-  datalayer_battery->status.cell_voltages_mV[0] = cellvoltage_max_mV;
-
-  datalayer_battery->status.cell_min_voltage_mV = cellvoltage_min_mV;
-  datalayer_battery->status.cell_voltages_mV[1] = cellvoltage_min_mV;
+  // Update cell count if we've received individual cell data
+  if (actual_cell_count > 0) {
+    datalayer_battery->info.number_of_cells = actual_cell_count;
+    
+    // Recalculate min/max from individual cells if available
+    uint16_t calculated_max = 0;
+    uint16_t calculated_min = 65535;
+    for (uint8_t i = 0; i < actual_cell_count; i++) {
+      uint16_t cell_v = datalayer_battery->status.cell_voltages_mV[i];
+      if (cell_v > 0) {  // Valid cell voltage
+        if (cell_v > calculated_max) calculated_max = cell_v;
+        if (cell_v < calculated_min) calculated_min = cell_v;
+      }
+    }
+    if (calculated_max > 0) {
+      datalayer_battery->status.cell_max_voltage_mV = calculated_max;
+    } else {
+      datalayer_battery->status.cell_max_voltage_mV = cellvoltage_max_mV;
+    }
+    if (calculated_min < 65535) {
+      datalayer_battery->status.cell_min_voltage_mV = calculated_min;
+    } else {
+      datalayer_battery->status.cell_min_voltage_mV = cellvoltage_min_mV;
+    }
+  } else {
+    // Fall back to Pylon protocol min/max when individual cells not available
+    datalayer_battery->status.cell_max_voltage_mV = cellvoltage_max_mV;
+    datalayer_battery->status.cell_voltages_mV[0] = cellvoltage_max_mV;
+    
+    datalayer_battery->status.cell_min_voltage_mV = cellvoltage_min_mV;
+    datalayer_battery->status.cell_voltages_mV[1] = cellvoltage_min_mV;
+  }
 
   datalayer_battery->status.temperature_min_dC = celltemperature_min_dC;
 
@@ -108,6 +135,40 @@ void EmusBms::handle_incoming_can_frame(CAN_frame rx_frame) {
     case 0x4291:
       break;
     default:
+      // Handle EMUS individual cell voltage messages (0x6B0-0x6B7)
+      // Each message contains 4 cells (2 bytes per cell, little-endian)
+      if (rx_frame.ID >= CELL_VOLTAGE_BASE_ID && rx_frame.ID < (CELL_VOLTAGE_BASE_ID + 24)) {
+        uint8_t group = rx_frame.ID - CELL_VOLTAGE_BASE_ID;
+        uint8_t cell_start = group * 4;  // 4 cells per message
+        
+        for (uint8_t i = 0; i < 4; i++) {
+          uint8_t cell_index = cell_start + i;
+          if (cell_index < MAX_CELLS && (i * 2 + 1) < 8) {
+            // Cell voltage in mV, little-endian (LSB first)
+            uint16_t cell_voltage = (rx_frame.data.u8[i * 2 + 1] << 8) | rx_frame.data.u8[i * 2];
+            datalayer_battery->status.cell_voltages_mV[cell_index] = cell_voltage;
+            
+            // Track the maximum cell count we've seen
+            if (cell_index + 1 > actual_cell_count && cell_voltage > 0) {
+              actual_cell_count = cell_index + 1;
+            }
+          }
+        }
+      }
+      // Handle EMUS individual cell balancing status messages (0x6B8-0x6BF)
+      // Each message contains 8 cells (1 byte per cell)
+      else if (rx_frame.ID >= CELL_BALANCING_BASE_ID && rx_frame.ID < (CELL_BALANCING_BASE_ID + 24)) {
+        uint8_t group = rx_frame.ID - CELL_BALANCING_BASE_ID;
+        uint8_t cell_start = group * 8;  // 8 cells per message
+        
+        for (uint8_t i = 0; i < 8; i++) {
+          uint8_t cell_index = cell_start + i;
+          if (cell_index < MAX_CELLS) {
+            // Balancing status: 0 = not balancing, >0 = balancing
+            datalayer_battery->status.cell_balancing_status[cell_index] = (rx_frame.data.u8[i] > 0);
+          }
+        }
+      }
       break;
   }
 }
@@ -131,7 +192,7 @@ void EmusBms::transmit_can(unsigned long currentMillis) {
 void EmusBms::setup(void) {  // Performs one time setup at startup
   strncpy(datalayer.system.info.battery_protocol, "EMUS BMS (Pylon 250k)", 63);
   datalayer.system.info.battery_protocol[63] = '\0';
-  datalayer_battery->info.number_of_cells = 2;
+  datalayer_battery->info.number_of_cells = 0;  // Will be updated dynamically based on received data
   datalayer_battery->info.max_design_voltage_dV = user_selected_max_pack_voltage_dV;
   datalayer_battery->info.min_design_voltage_dV = user_selected_min_pack_voltage_dV;
   datalayer_battery->info.max_cell_voltage_mV = user_selected_max_cell_voltage_mV;

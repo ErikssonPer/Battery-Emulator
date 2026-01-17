@@ -29,6 +29,9 @@ class EmusBms : public CanBattery {
 
  private:
   static const int MAX_CELL_DEVIATION_MV = 150;
+  static const int MAX_CELLS = 192;  // Maximum cells supported
+  static const uint16_t CELL_VOLTAGE_BASE_ID = 0x6B0;  // Base CAN ID for cell voltages
+  static const uint16_t CELL_BALANCING_BASE_ID = 0x6B8;  // Base CAN ID for balancing status
 
   DATALAYER_BATTERY_TYPE* datalayer_battery;
 
@@ -82,6 +85,7 @@ class EmusBms : public CanBattery {
   uint8_t SOH = 100;
   uint8_t charge_forbidden = 0;
   uint8_t discharge_forbidden = 0;
+  uint8_t actual_cell_count = 0;  // Actual number of cells detected
 };
 
 #endif
