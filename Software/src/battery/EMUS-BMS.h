@@ -20,6 +20,7 @@ class EmusBms : public CanBattery {
     allows_contactor_closing = &datalayer.system.status.battery_allows_contactor_closing;
     contactor_closing_allowed = nullptr;
   }
+  virtual ~EmusBms() = default;
 
   virtual void setup(void);
   virtual void handle_incoming_can_frame(CAN_frame rx_frame);
@@ -103,3 +104,4 @@ class EmusBms : public CanBattery {
 };
 
 #endif
+
