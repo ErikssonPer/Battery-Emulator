@@ -187,6 +187,17 @@ void EmusBms::transmit_can(unsigned long currentMillis) {
       PYLON_4200.data.u8[0] = 0x00;  //Request system equipment info
     }
   }
+  
+  // Send 5s CAN Message - Request EMUS individual cell data
+  if (currentMillis - previousMillis5000 >= INTERVAL_5_S) {
+    previousMillis5000 = currentMillis;
+    
+    // Request individual cell voltages (0x00 in byte 4 of ID requests all groups)
+    transmit_can_frame(&EMUS_CELL_VOLTAGE_REQUEST);
+    
+    // Request individual cell balancing status
+    transmit_can_frame(&EMUS_CELL_BALANCING_REQUEST);
+  }
 }
 
 void EmusBms::setup(void) {  // Performs one time setup at startup

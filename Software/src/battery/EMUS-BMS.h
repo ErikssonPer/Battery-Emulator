@@ -42,6 +42,7 @@ class EmusBms : public CanBattery {
   bool* contactor_closing_allowed;
 
   unsigned long previousMillis1000 = 0;  // will store last time a 1s CAN Message was sent
+  unsigned long previousMillis5000 = 0;  // will store last time a 5s CAN Message was sent
 
   //Actual content messages
   CAN_frame PYLON_3010 = {.FD = false,
@@ -64,6 +65,18 @@ class EmusBms : public CanBattery {
                           .DLC = 8,
                           .ID = 0x4200,
                           .data = {0x02, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00}};
+  // EMUS request for individual cell voltages (group 0 = all cells)
+  CAN_frame EMUS_CELL_VOLTAGE_REQUEST = {.FD = false,
+                                          .ext_ID = false,
+                                          .DLC = 8,
+                                          .ID = 0x6B0,
+                                          .data = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00}};
+  // EMUS request for individual cell balancing status (group 0 = all cells)
+  CAN_frame EMUS_CELL_BALANCING_REQUEST = {.FD = false,
+                                            .ext_ID = false,
+                                            .DLC = 8,
+                                            .ID = 0x6B8,
+                                            .data = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00}};
 
   int16_t celltemperature_max_dC = 0;
   int16_t celltemperature_min_dC = 0;
