@@ -55,8 +55,12 @@ void GrowattHvInverter::
       const uint32_t soc_pct = (uint32_t)(datalayer.battery.status.reported_soc / 100);  // 0..100
       rem_10mAh = (uint32_t)((uint64_t)full_10mAh * soc_pct / 100ULL);
     }
-    if (full_10mAh > 0xFFFF) full_10mAh = 0xFFFF;
-    if (rem_10mAh > 0xFFFF) rem_10mAh = 0xFFFF;
+        if (full_10mAh > 0xFFFF) {
+      full_10mAh = 0xFFFF;
+    }
+    if (rem_10mAh > 0xFFFF) {
+      rem_10mAh = 0xFFFF;
+    }
 
     capacity_full_10mAh = (uint16_t)full_10mAh;
     capacity_remaining_10mAh = (uint16_t)rem_10mAh;
